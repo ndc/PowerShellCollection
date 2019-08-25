@@ -17,6 +17,8 @@ param(
     [string] $targetFolder = $(throw "Please specify the target folder")
 )
 
+Add-Type -AssemblyName System.Drawing
+
 function isJpeg {
     param (
         [System.IO.FileSystemInfo] $file
@@ -38,9 +40,19 @@ function isJpeg {
     return $true
 }
 
+function getImageWidth {
+    param (
+        $file
+    )
+
+    $image = [System.Drawing.Image]::FromFile($file.FullName)
+    return $image.Width
+}
+
 $files = Get-ChildItem -Path ($env:LOCALAPPDATA +
     "\Packages\Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy\LocalState\Assets") |
-Where-Object { isJpeg $_ }
+Where-Object { isJpeg $_ } |
+Where-Object { (getImageWidth $_) -ge 1920 }
 
 $files | ForEach-Object -Process {
     if (!(Test-Path "$targetFolder\$_.jpg")) {
